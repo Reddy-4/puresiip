@@ -1,4 +1,4 @@
-# AquaTrack — Setup Guide
+# Puresiip — Setup Guide
 
 This app runs on two free services:
 - **GitHub Pages** — hosts the app itself (the screens, buttons, design)
