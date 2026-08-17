@@ -12,12 +12,22 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
 <link rel="icon" href="icon-192.png"/>
+
+<!-- warm up connections early so the actual requests below are fast when they fire -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preconnect" href="https://www.gstatic.com"/>
+<link rel="preconnect" href="https://firestore.googleapis.com"/>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com"/>
+
+<!-- load fonts WITHOUT blocking the page from painting -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'"/>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"/></noscript>
+
 <style>
   html,body{margin:0;padding:0;background:#060B10;}
 </style>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
-
   :root{
     --ink:#0A2540;
     --ink-soft:#5C7080;
@@ -260,9 +270,7 @@
   appId: "1:2818416930:web:4132a8024b330b8738857b"
   };
 </script>
-<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+<!-- the actual Firebase code loads further down, after the page content, so the app appears instantly instead of a blank white screen -->
 
 
 <div id="wc-root" data-theme="dark">
@@ -272,7 +280,7 @@
   <!-- BOOT -->
   <div id="wc-boot">
     <div class="wc-boot-mark"><div class="wc-boot-ring"></div><div class="wc-boot-drop"><span class="wc-mark lg"></span></div></div>
-    <p>Loading <span class="wc-brand-name">Puresiip</span>…</p>
+    <p>Loading <span class="wc-brand-name">PURESIIP</span>…</p>
   </div>
 
   <!-- AUTH: LOGIN -->
@@ -353,6 +361,11 @@
     <div class="wc-modal" id="wc-modal-inner"></div>
   </div>
 </div>
+
+<!-- Firebase loads here, after everything above has already painted on screen -->
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
 
 <script>
 (function(){
@@ -904,8 +917,7 @@
     var monthExp = S.expenses.filter(function(e){return monthKeyOf(e.date)===mk;}).sort(function(a,b){return b.ts-a.ts;});
     var total = monthExp.reduce(function(s,e){return s+e.amount;},0);
     var apts = activeApartments();
-    var revenue = apts.reduce(function(s,a){ return s + cansForAptMonth(a.id, mk, false)*a.rate; }, 0)
-      + S.history.filter(function(h){return h.month===mk;}).reduce(function(s,h){return s+h.amount;},0);
+    var revenue = S.history.filter(function(h){return h.month===mk;}).reduce(function(s,h){return s+h.amount;},0);
 
     var html = monthNavHtml(mk);
     html += '<div class="wc-summary-grid"><div class="wc-summary-box"><div class="v">₹'+total.toFixed(0)+'</div><div class="l">Expenses</div></div>'+
