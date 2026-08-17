@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"/>
+<title>AquaTrack</title>
+<meta name="theme-color" content="#060B10"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="AquaTrack"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="icon" href="icon-192.png"/>
+<style>
+  html,body{margin:0;padding:0;background:#060B10;}
+</style>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --ink:#0A2540;
+    --ink-soft:#5C7080;
+    --ink-faint:#93A5B1;
+    --bg:#F3F6FA;
+    --surface:#FFFFFF;
+    --line:#E4EAF0;
+    --teal:#046865;
+    --teal-dark:#034B49;
+    --aqua:#00C2AC;
+    --aqua-soft:#DFF7F3;
+    --indigo:#3B4CCA;
+    --amber:#F0862F;
+    --amber-soft:#FDEEE0;
+    --green:#1AA160;
+    --green-soft:#E4F6ED;
+    --red:#E4483B;
+    --red-soft:#FCEAE8;
+    --glass-top: rgba(243,246,250,0.88);
+    --glass-nav: rgba(255,255,255,0.92);
+    --shadow-sm: 0 1px 2px rgba(10,37,64,0.06), 0 1px 1px rgba(10,37,64,0.04);
+    --shadow-md: 0 8px 24px rgba(10,37,64,0.08), 0 2px 6px rgba(10,37,64,0.04);
+    --shadow-lg: 0 16px 40px rgba(4,104,101,0.16);
+    --r-sm:10px; --r-md:16px; --r-lg:22px;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  #wc-root[data-theme="dark"]{
+    --ink:#EDF5F5; --ink-soft:#8FA6B0; --ink-faint:#546A75;
+    --bg:#060B10; --surface:#0E1620; --line:#1B2833;
+    --teal:#13B0A6; --teal-dark:#0B7A73;
+    --aqua:#02E9CB; --aqua-soft:#0A2321;
+    --indigo:#6C7BFF;
+    --amber:#FFA35B; --amber-soft:#241A0E;
+    --green:#34D98C; --green-soft:#0D2419;
+    --red:#FF7368; --red-soft:#271210;
+    --glass-top: rgba(6,11,16,0.88);
+    --glass-nav: rgba(10,17,23,0.92);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.5), 0 1px 1px rgba(0,0,0,0.35);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.35);
+    --shadow-lg: 0 16px 40px rgba(2,233,203,0.16);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  #wc-root{
+    background:var(--bg); color:var(--ink); min-height:100%;
+    max-width:480px; margin:0 auto; padding-bottom:96px; position:relative;
+    -webkit-font-smoothing:antialiased; transition:background .25s ease, color .25s ease;
+  }
+  .wc-theme-toggle{
+    width:36px; height:36px; border-radius:50%; flex-shrink:0;
+    background:var(--bg); border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--ink-soft); box-shadow:none; padding:0;
+  }
+  .wc-theme-toggle svg{width:16px; height:16px;}
+  .wc-icon-sun{display:none;} .wc-icon-moon{display:none;}
+  #wc-root[data-theme="dark"] .wc-icon-sun{display:inline-flex;}
+  #wc-root[data-theme="light"] .wc-icon-moon{display:inline-flex;}
+  .wc-logout-ic .wc-icon-sun,.wc-logout-ic .wc-icon-moon{display:none !important;}
+  .wc-hidden{display:none !important;}
+  .wc-mono{font-family:'IBM Plex Mono',monospace;}
+  .wc-display{font-family:'Space Grotesk',sans-serif;}
+
+
+  ::selection{background:var(--aqua-soft);}
+  button{font-family:inherit;}
+  input,select{font-family:inherit;}
+
+  /* -------- press feedback -------- */
+  .wc-tap{transition:transform .12s ease, opacity .12s ease, box-shadow .12s ease;}
+  .wc-tap:active{transform:scale(0.96); opacity:0.9;}
+
+  /* -------- skeleton boot screen -------- */
+  #wc-boot{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+  }
+  .wc-boot-mark{width:64px;height:64px;position:relative;}
+  .wc-boot-ring{
+    position:absolute; inset:0; border-radius:50%; border:3px solid var(--aqua-soft); border-top-color:var(--aqua);
+    animation:wc-spin 0.9s linear infinite;
+  }
+  .wc-boot-drop{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;}
+  @keyframes wc-spin{to{transform:rotate(360deg);}}
+  #wc-boot p{color:var(--ink-soft); font-size:13px; letter-spacing:0.2px;}
+
+  /* -------- droplet mark -------- */
+  .wc-mark{display:inline-block; width:16px; height:20px; background:linear-gradient(160deg,var(--aqua),var(--teal)); border-radius:0 50% 50% 50%; transform:rotate(45deg); box-shadow:0 2px 6px rgba(0,194,172,.35);}
+  .wc-mark.lg{width:34px;height:42px;}
+
+  /* -------- auth -------- */
+  .wc-auth-wrap{min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:36px 26px; max-width:480px; margin:0 auto; animation:wc-fadeup .5s ease; position:relative;}
+  .wc-theme-slot{position:absolute; top:20px; right:20px;}
+  @keyframes wc-fadeup{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+  .wc-auth-logo{display:flex; align-items:center; gap:12px; margin-bottom:4px;}
+  .wc-auth-logo h1{font-family:'Space Grotesk',sans-serif; font-size:25px; margin:0; letter-spacing:-0.5px; color:var(--ink);}
+  .wc-auth-sub{color:var(--ink-soft); font-size:14.5px; margin:2px 0 30px 0;}
+  .wc-field{margin-bottom:15px;}
+  .wc-field label{display:block; font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-bottom:7px; text-transform:uppercase; letter-spacing:0.6px;}
+  .wc-field input,.wc-field select{
+    width:100%; padding:14px 15px; border-radius:13px; border:1.5px solid var(--line);
+    font-size:16px; background:var(--surface); color:var(--ink); outline:none; transition:border-color .15s, box-shadow .15s;
+  }
+  .wc-field input:focus,.wc-field select:focus{border-color:var(--teal); box-shadow:0 0 0 4px var(--aqua-soft);}
+  .wc-btn{
+    display:block; width:100%; padding:16px; border-radius:13px; border:none;
+    background:linear-gradient(135deg,var(--teal),var(--teal-dark)); color:#fff; font-size:15.5px; font-weight:700; cursor:pointer;
+    box-shadow:var(--shadow-lg); letter-spacing:0.1px;
+  }
+  .wc-btn.ghost{background:transparent; color:var(--teal); box-shadow:none; border:1.5px solid var(--line);}
+  .wc-btn.danger{background:linear-gradient(135deg,var(--red),#C7382C); box-shadow:0 10px 24px rgba(228,72,59,.25);}
+  .wc-btn.small{padding:10px 16px; font-size:13px; width:auto; border-radius:10px; box-shadow:none;}
+  .wc-switch-link{text-align:center; margin-top:20px; font-size:14px; color:var(--ink-soft);}
+  .wc-switch-link a{color:var(--teal); font-weight:700; text-decoration:none; cursor:pointer;}
+  .wc-error{background:var(--red-soft); color:var(--red); padding:11px 13px; border-radius:11px; font-size:13px; margin-bottom:14px; font-weight:500;}
+  .wc-info{background:var(--aqua-soft); color:var(--teal-dark); padding:16px; border-radius:14px; font-size:14px; line-height:1.55;}
+
+  /* -------- topbar -------- */
+  .wc-topbar{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 18px 12px 18px;
+    position:sticky; top:0; background:var(--glass-top); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:5;
+  }
+  .wc-topbar .wc-who{display:flex; align-items:center; gap:9px;}
+  .wc-topbar h2{font-family:'Space Grotesk',sans-serif; font-size:16.5px; margin:0; color:var(--ink); line-height:1.2;}
+  .wc-role-pill{font-size:9.5px; text-transform:uppercase; background:var(--teal); color:#fff; padding:2px 8px; border-radius:20px; font-weight:700; letter-spacing:0.4px; display:inline-block; margin-top:2px;}
+  .wc-sync{display:flex; align-items:center; gap:5px; font-size:10.5px; color:var(--ink-faint); font-weight:600;}
+  .wc-sync-dot{width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 0 0 rgba(26,161,96,.5); animation:wc-pulse 2s infinite;}
+  @keyframes wc-pulse{0%{box-shadow:0 0 0 0 rgba(26,161,96,.45);} 70%{box-shadow:0 0 0 6px rgba(26,161,96,0);} 100%{box-shadow:0 0 0 0 rgba(26,161,96,0);}}
+  .wc-logout-ic{background:none; border:none; color:var(--ink-faint); cursor:pointer; padding:6px; border-radius:8px;}
+  .wc-logout-ic:active{background:var(--line);}
+
+  /* -------- content -------- */
+  #wc-content{padding:4px 16px 0 16px; animation:wc-tabfade .28s ease;}
+  @keyframes wc-tabfade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+  .wc-card{background:var(--surface); border-radius:var(--r-md); padding:17px; margin-bottom:12px; box-shadow:var(--shadow-sm); border:1px solid var(--line);}
+  .wc-card h3{margin:0 0 12px 0; font-size:14.5px; font-weight:700; color:var(--ink); font-family:'Space Grotesk',sans-serif;}
+  .wc-section-title{font-size:11.5px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.7px; margin:20px 4px 9px 4px;}
+
+  /* -------- hero tank (signature element) -------- */
+  .wc-hero{
+    background:linear-gradient(135deg,var(--teal) 0%, var(--teal-dark) 100%);
+    border-radius:var(--r-lg); padding:22px; margin-bottom:16px; display:flex; align-items:center; gap:18px;
+    box-shadow:var(--shadow-lg); position:relative; overflow:hidden;
+  }
+  .wc-hero::after{content:'';position:absolute; width:220px; height:220px; background:radial-gradient(circle,rgba(255,255,255,.08),transparent 70%); top:-80px; right:-60px;}
+  .wc-tank{width:92px; height:92px; border-radius:50%; position:relative; overflow:hidden; background:rgba(255,255,255,0.12); border:3px solid rgba(255,255,255,0.25); flex-shrink:0;}
+  .wc-tank .fill{position:absolute; left:-10%; right:-10%; bottom:0; background:linear-gradient(180deg,#5EEBD8,var(--aqua)); transition:height .9s cubic-bezier(.4,0,.2,1); border-radius:50% 50% 0 0 / 18px 18px 0 0;}
+  .wc-tank .fill svg{position:absolute; top:-9px; left:0; width:200%; height:18px; animation:wc-wavemove 2.6s linear infinite;}
+  @keyframes wc-wavemove{from{transform:translateX(0);} to{transform:translateX(-50%);}}
+  .wc-tank .pct{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; text-shadow:0 1px 3px rgba(0,0,0,.25); font-family:'IBM Plex Mono',monospace;}
+  .wc-hero-txt .num{font-family:'Space Grotesk',sans-serif; font-size:34px; font-weight:700; color:#fff; line-height:1; letter-spacing:-0.5px;}
+  .wc-hero-txt .lbl{font-size:12.5px; color:rgba(255,255,255,.78); margin-top:4px; font-weight:500;}
+
+  /* -------- deliver: apartment picker -------- */
+  .wc-apt-pick{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px;}
+  .wc-apt-tile{
+    background:var(--surface); border:1.5px solid var(--line); border-radius:14px; padding:13px; cursor:pointer; text-align:left;
+  }
+  .wc-apt-tile.selected{border-color:var(--teal); background:var(--aqua-soft); box-shadow:0 0 0 3px rgba(0,194,172,.12);}
+  .wc-apt-tile .name{font-weight:700; font-size:13.5px; color:var(--ink); font-family:'Space Grotesk',sans-serif;}
+  .wc-apt-tile .meta{font-size:11px; color:var(--ink-soft); margin-top:4px;}
+  .wc-qty-row{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0;}
+  .wc-qty-chip{padding:13px 0; flex:1 1 44px; text-align:center; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); font-weight:700; cursor:pointer; font-size:15px; font-family:'IBM Plex Mono',monospace; color:var(--ink);}
+  .wc-qty-chip.selected{background:var(--teal); color:#fff; border-color:var(--teal); box-shadow:0 6px 16px rgba(4,104,101,.28);}
+  .wc-feed-item{display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); font-size:13px;}
+  .wc-feed-item:last-child{border-bottom:none;}
+  .wc-feed-item .who{color:var(--ink-soft); font-weight:500;}
+  .wc-feed-item .cans-badge{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--teal);}
+
+  /* -------- lists -------- */
+  .wc-list-row{display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--line);}
+  .wc-list-row:last-child{border-bottom:none;}
+  .wc-list-row .name{font-weight:700; font-size:14px; color:var(--ink); font-family:'Space Grotesk',sans-serif;}
+  .wc-list-row .sub{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .wc-list-row .right{text-align:right;}
+  .wc-amt{font-weight:700; font-size:15.5px; color:var(--ink); font-family:'IBM Plex Mono',monospace;}
+  .wc-tag{font-size:9.5px; padding:3px 9px; border-radius:20px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;}
+  .wc-tag.pending{background:var(--amber-soft); color:var(--amber);}
+  .wc-tag.cleared{background:var(--green-soft); color:var(--green);}
+  .wc-icon-btn{background:none; border:none; color:var(--teal); font-size:12.5px; font-weight:700; cursor:pointer; padding:4px 0;}
+
+  /* -------- progress bar (mini) -------- */
+  .wc-bar{height:6px; border-radius:6px; background:var(--line); overflow:hidden; margin-top:6px;}
+  .wc-bar-fill{height:100%; background:linear-gradient(90deg,var(--aqua),var(--teal)); border-radius:6px; transition:width .6s ease;}
+
+  /* -------- bottom nav -------- */
+  .wc-nav{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    background:var(--glass-nav); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-top:1px solid var(--line); display:flex; padding:8px 4px calc(9px + env(safe-area-inset-bottom,0px)) 4px;
+    box-shadow:0 -6px 24px rgba(10,37,64,0.06); z-index:10;
+  }
+  .wc-nav-btn{
+    flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:6px 2px; cursor:pointer; color:var(--ink-faint); font-size:10px; font-weight:600;
+  }
+  .wc-nav-btn svg{width:21px; height:21px; transition:transform .18s ease;}
+  .wc-nav-btn.active{color:var(--teal);}
+  .wc-nav-btn.active svg{transform:translateY(-1px) scale(1.05);}
+
+  /* -------- modal -------- */
+  .wc-modal-bg{position:fixed; inset:0; background:rgba(10,37,64,0.5); display:flex; align-items:flex-end; justify-content:center; z-index:50; opacity:0; pointer-events:none; transition:opacity .2s ease;}
+  .wc-modal-bg.show{opacity:1; pointer-events:auto;}
+  .wc-modal{background:var(--surface); border-radius:22px 22px 0 0; padding:24px 20px calc(28px + env(safe-area-inset-bottom,0px)) 20px; width:100%; max-width:480px; max-height:85vh; overflow-y:auto; transform:translateY(100%); transition:transform .28s cubic-bezier(.32,.72,0,1);}
+  .wc-modal-bg.show .wc-modal{transform:translateY(0);}
+  .wc-modal h3{margin:0 0 16px 0; font-size:17px; font-family:'Space Grotesk',sans-serif; color:var(--ink);}
+
+  .wc-empty{text-align:center; padding:34px 10px; color:var(--ink-faint); font-size:13px; line-height:1.6;}
+  .wc-month-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .wc-month-nav .m{font-weight:700; font-size:16px; color:var(--ink); font-family:'Space Grotesk',sans-serif; display:inline-flex; align-items:center; gap:8px; flex-direction:column;}
+  .wc-today-btn{background:var(--aqua-soft); color:var(--teal); border:none; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; cursor:pointer; text-transform:uppercase; letter-spacing:0.3px;}
+  .wc-month-nav button{background:var(--surface); border:1.5px solid var(--line); border-radius:10px; width:38px; height:38px; color:var(--teal); cursor:pointer; display:flex; align-items:center; justify-content:center;}
+  .wc-summary-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  .wc-summary-box{background:var(--surface); border-radius:14px; padding:15px; box-shadow:var(--shadow-sm); border:1px solid var(--line);}
+  .wc-summary-box .v{font-size:21px; font-weight:700; color:var(--ink); font-family:'IBM Plex Mono',monospace;}
+  .wc-summary-box .l{font-size:10.5px; color:var(--ink-soft); margin-top:3px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px;}
+
+  /* -------- toast -------- */
+  #wc-toast-wrap{position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:80; display:flex; flex-direction:column; gap:8px; width:calc(100% - 32px); max-width:448px; pointer-events:none;}
+  .wc-toast{background:var(--ink); color:#fff; padding:12px 16px; border-radius:12px; font-size:13.5px; font-weight:600; box-shadow:var(--shadow-lg); display:flex; align-items:center; gap:8px; animation:wc-toast-in .25s ease;}
+  .wc-toast.success{background:var(--teal-dark);}
+  .wc-toast.error{background:var(--red);}
+  @keyframes wc-toast-in{from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<!--
+  ============================================================
+  STEP 3 OF THE SETUP GUIDE: PASTE YOUR FIREBASE CONFIG BELOW
+  ============================================================
+  Follow the guide to create a free Firebase project, then copy
+  the config object Firebase gives you and paste it in place of
+  the placeholder below (replace the whole firebaseConfig object).
+-->
+<script>
+  var firebaseConfig = {
+    apiKey: "PASTE_YOUR_API_KEY_HERE",
+    authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
+    projectId: "PASTE_YOUR_PROJECT_ID_HERE",
+    storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
+    messagingSenderId: "PASTE_YOUR_SENDER_ID_HERE",
+    appId: "PASTE_YOUR_APP_ID_HERE"
+  };
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+
+
+<div id="wc-root" data-theme="dark">
+
+  <div id="wc-toast-wrap"></div>
+
+  <!-- BOOT -->
+  <div id="wc-boot">
+    <div class="wc-boot-mark"><div class="wc-boot-ring"></div><div class="wc-boot-drop"><span class="wc-mark lg"></span></div></div>
+    <p>Loading <span class="wc-brand-name">AquaTrack</span>…</p>
+  </div>
+
+  <!-- AUTH: LOGIN -->
+  <div id="wc-login-screen" class="wc-auth-wrap wc-hidden">
+    <div class="wc-theme-slot"></div>
+    <div class="wc-auth-logo"><span class="wc-mark lg"></span><h1 class="wc-brand-name">AquaTrack</h1></div>
+    <p class="wc-auth-sub">Delivery &amp; billing, synced across your team</p>
+    <div id="wc-login-error"></div>
+    <div class="wc-field"><label>Username</label><input id="wc-login-user" autocomplete="username" placeholder="e.g. ravi01"/></div>
+    <div class="wc-field"><label>Password</label><input id="wc-login-pass" type="password" autocomplete="current-password" placeholder="••••••"/></div>
+    <button class="wc-btn wc-tap" onclick="wcLogin()">Log In</button>
+    <p class="wc-switch-link">New here? <a onclick="wcShowSignup()">Create an account</a></p>
+  </div>
+
+  <!-- AUTH: SIGNUP -->
+  <div id="wc-signup-screen" class="wc-auth-wrap wc-hidden">
+    <div class="wc-theme-slot"></div>
+    <div class="wc-auth-logo"><span class="wc-mark lg"></span><h1 class="wc-brand-name">AquaTrack</h1></div>
+    <p class="wc-auth-sub">Create your account</p>
+    <div id="wc-signup-error"></div>
+    <div class="wc-field"><label>Your Name</label><input id="wc-signup-name" placeholder="e.g. Ravi Kumar"/></div>
+    <div class="wc-field"><label>Username</label><input id="wc-signup-user" autocomplete="username" placeholder="pick a username"/></div>
+    <div class="wc-field"><label>Password</label><input id="wc-signup-pass" type="password" autocomplete="new-password" placeholder="min 4 characters"/></div>
+    <button class="wc-btn wc-tap" onclick="wcSignup()">Sign Up</button>
+    <p class="wc-switch-link">Already have an account? <a onclick="wcShowLogin()">Log in</a></p>
+  </div>
+
+  <!-- PENDING -->
+  <div id="wc-pending-screen" class="wc-auth-wrap wc-hidden">
+    <div class="wc-theme-slot"></div>
+    <div class="wc-auth-logo"><span class="wc-mark lg"></span><h1 class="wc-brand-name">AquaTrack</h1></div>
+    <div class="wc-info">Your account is created but waiting for admin approval. Ask your admin to approve <b id="wc-pending-username"></b> from the Admin tab, then log in again.</div>
+    <button class="wc-btn ghost wc-tap" style="margin-top:16px;" onclick="wcLogout()">Back to Login</button>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="wc-app" class="wc-hidden">
+    <div class="wc-topbar">
+      <div class="wc-who">
+        <span class="wc-mark"></span>
+        <div>
+          <h2 id="wc-current-name">—</h2>
+          <span class="wc-role-pill" id="wc-current-role"></span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="wc-sync"><span class="wc-sync-dot"></span><span id="wc-sync-label">Live</span></div>
+        <div class="wc-theme-slot" style="position:static;"></div>
+        <button class="wc-logout-ic wc-tap" onclick="wcLogout()" title="Log out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="wc-content"></div>
+
+    <div class="wc-nav" id="wc-nav">
+      <button class="wc-nav-btn wc-tap" data-tab="deliver" onclick="wcSwitchTab('deliver')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6.6 6 11.3a6 6 0 1 1-12 0c0-4.7 6-11.3 6-11.3z"/></svg>
+        Deliver</button>
+      <button class="wc-nav-btn wc-tap" data-tab="apartments" onclick="wcSwitchTab('apartments')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><line x1="9" y1="8" x2="9" y2="8"/><line x1="15" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="9" y2="16"/><line x1="15" y1="16" x2="15" y2="16"/></svg>
+        Places</button>
+      <button class="wc-nav-btn wc-tap" data-tab="billing" onclick="wcSwitchTab('billing')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
+        Billing</button>
+      <button class="wc-nav-btn wc-tap" data-tab="expenses" onclick="wcSwitchTab('expenses')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-4a2 2 0 1 1 0-4h4z"/></svg>
+        Expenses</button>
+      <button class="wc-nav-btn wc-tap wc-hidden" id="wc-admin-nav-btn" data-tab="admin" onclick="wcSwitchTab('admin')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Admin</button>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="wc-modal-bg" id="wc-modal-bg" onclick="if(event.target===this)wcCloseModal()">
+    <div class="wc-modal" id="wc-modal-inner"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var S = {
+    users: [], apartments: [], entries: [], expenses: [], history: [],
+    brand: { name: 'AquaTrack' },
+    currentUser: null, activeTab: 'deliver',
+    selectedAptId: null, selectedQty: null
+  };
+  var lastSnapshot = '';
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function currentMonthKey(){ var d = new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1); }
+  function shiftMonthKey(mk, dir){
+    var parts = mk.split('-'); var y = parseInt(parts[0],10); var m = parseInt(parts[1],10)-1;
+    m += dir;
+    while(m < 0){ m += 12; y -= 1; }
+    while(m > 11){ m -= 12; y += 1; }
+    return y+'-'+pad2(m+1);
+  }
+  var wcCurrentMonth = currentMonthKey();
+
+  var WAVE_SVG = '<svg viewBox="0 0 200 20" preserveAspectRatio="none"><path d="M0 10 Q 25 0 50 10 T 100 10 T 150 10 T 200 10 V20 H0 Z" fill="rgba(255,255,255,.35)"/><path d="M100 10 Q 125 0 150 10 T 200 10 T 250 10 T 300 10 V20 H100 Z" fill="rgba(255,255,255,.35)"/></svg>';
+
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+  function todayStr(){ var d = new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+  function monthKeyOf(dateStr){ return dateStr.slice(0,7); }
+  function monthNavHtml(mk){
+    var todayBtn = mk !== currentMonthKey() ? '<button class="wc-tap wc-today-btn" onclick="wcJumpToday()">Today</button>' : '';
+    return '<div class="wc-month-nav"><button class="wc-tap" onclick="wcShiftMonth(-1)">‹</button>'+
+      '<span class="m">'+monthLabel(mk)+todayBtn+'</span>'+
+      '<button class="wc-tap" onclick="wcShiftMonth(1)">›</button></div>';
+  }
+  function monthLabel(mk){
+    var parts = mk.split('-'); var d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, 1);
+    return d.toLocaleString('default',{month:'long', year:'numeric'});
+  }
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+  }
+
+  function showToast(msg, type){
+    var wrap = document.getElementById('wc-toast-wrap');
+    var el = document.createElement('div');
+    el.className = 'wc-toast' + (type ? ' '+type : '');
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(function(){ el.remove(); }, 300); }, 2200);
+  }
+
+  // ---------------- Firebase setup ----------------
+  var CONFIG_MISSING = !firebaseConfig.apiKey || firebaseConfig.apiKey.indexOf('PASTE_') === 0;
+  var db = null, auth = null;
+  if(!CONFIG_MISSING){
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    auth = firebase.auth();
+    try{ db.enablePersistence({ synchronizeTabs:true }); }catch(e){}
+  }
+
+  function showConfigMissingScreen(){
+    document.getElementById('wc-boot').classList.add('wc-hidden');
+    var el = document.createElement('div');
+    el.className = 'wc-auth-wrap';
+    el.innerHTML = '<div class="wc-auth-logo"><span class="wc-mark lg"></span><h1>Almost there</h1></div>'+
+      '<div class="wc-info">This app needs your free Firebase project connected before it will work.<br><br>Open <b>index.html</b> in your GitHub repo, find the <code>firebaseConfig</code> block near the top, and paste in the config values from your Firebase project (Step 3 of the setup guide).</div>';
+    document.getElementById('wc-root').appendChild(el);
+  }
+
+  // ---------------- local device storage (session + theme; per-phone, not shared) ----------------
+  function localGet(key, fallback){
+    try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
+  }
+  function localSet(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
+
+  // ---------------- Firestore data layer (shared across every phone) ----------------
+  var DOC_DEFAULTS = {
+    users: {list:[]}, apartments: {list:[]}, entries: {list:[]}, expenses: {list:[]}, history: {list:[]},
+    brand: {name:'AquaTrack'}
+  };
+  async function saveDoc(name, dataObj){
+    if(!db) return;
+    try{ await db.collection('appdata').doc(name).set(dataObj); }
+    catch(e){ console.error('save failed', name, e); showToast('Sync failed — check your connection', 'error'); }
+  }
+  var save = {
+    users: function(){ return saveDoc('users', {list: S.users}); },
+    apartments: function(){ return saveDoc('apartments', {list: S.apartments}); },
+    entries: function(){ return saveDoc('entries', {list: S.entries}); },
+    expenses: function(){ return saveDoc('expenses', {list: S.expenses}); },
+    history: function(){ return saveDoc('history', {list: S.history}); },
+    brand: function(){ return saveDoc('brand', S.brand); }
+  };
+  function applyBrand(){
+    document.querySelectorAll('.wc-brand-name').forEach(function(el){ el.textContent = S.brand.name; });
+    document.title = S.brand.name;
+  }
+
+  // realtime listeners: every phone gets pushed updates instantly, no polling needed
+  var loadedFlags = { users:false, apartments:false, entries:false, expenses:false, history:false, brand:false };
+  var firstDataReady = false;
+  function fieldFromDoc(name, data){
+    if(name === 'brand') return data && data.name ? data : DOC_DEFAULTS.brand;
+    return (data && data.list) ? data.list : [];
+  }
+  function attachRealtimeListeners(){
+    ['users','apartments','entries','expenses','history','brand'].forEach(function(name){
+      db.collection('appdata').doc(name).onSnapshot(function(snap){
+        var data = snap.exists ? snap.data() : DOC_DEFAULTS[name];
+        S[name] = fieldFromDoc(name, data);
+        if(name === 'brand') applyBrand();
+        loadedFlags[name] = true;
+        var syncLabel = document.getElementById('wc-sync-label');
+        if(syncLabel) syncLabel.textContent = 'Live';
+        if(!firstDataReady){
+          if(Object.keys(loadedFlags).every(function(k){ return loadedFlags[k]; })){
+            firstDataReady = true;
+            onFirstDataReady();
+          }
+        } else if(S.currentUser){
+          renderActiveTab();
+        }
+      }, function(err){
+        console.error('listener error', name, err);
+        var syncLabel = document.getElementById('wc-sync-label');
+        if(syncLabel) syncLabel.textContent = 'Offline';
+      });
+    });
+  }
+
+  // ---------------- theme ----------------
+  var THEME_TOGGLE_HTML = '<button class="wc-theme-toggle wc-tap" onclick="wcToggleTheme()" title="Toggle theme">'+
+    '<svg class="wc-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.9" y1="4.9" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.1" y2="19.1"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.9" y1="19.1" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.1" y2="4.9"/></svg>'+
+    '<svg class="wc-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>';
+  document.querySelectorAll('.wc-theme-slot').forEach(function(slot){ slot.innerHTML = THEME_TOGGLE_HTML; });
+
+  window.wcToggleTheme = function(){
+    var root = document.getElementById('wc-root');
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localSet('wc-theme', next);
+  };
+
+  // ---------------- boot ----------------
+  function boot(){
+    var theme = localGet('wc-theme', 'dark');
+    document.getElementById('wc-root').setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+
+    if(CONFIG_MISSING){ showConfigMissingScreen(); return; }
+
+    auth.signInAnonymously().catch(function(err){
+      console.error('auth failed', err);
+      document.getElementById('wc-boot').classList.add('wc-hidden');
+      showToast('Could not connect — check your internet connection', 'error');
+    });
+    attachRealtimeListeners();
+  }
+
+  function onFirstDataReady(){
+    document.getElementById('wc-boot').classList.add('wc-hidden');
+    var session = localGet('wc-session', null);
+    if(session && session.username){
+      var u = S.users.find(function(x){return x.username===session.username;});
+      if(u && u.role !== 'pending'){ S.currentUser = u; showApp(); return; }
+    }
+    wcShowLogin();
+  }
+
+  // ---------------- auth ----------------
+  window.wcShowLogin = function(){ hideAllScreens(); document.getElementById('wc-login-screen').classList.remove('wc-hidden'); };
+  window.wcShowSignup = function(){ hideAllScreens(); document.getElementById('wc-signup-screen').classList.remove('wc-hidden'); };
+  function hideAllScreens(){
+    ['wc-login-screen','wc-signup-screen','wc-pending-screen','wc-app'].forEach(function(id){ document.getElementById(id).classList.add('wc-hidden'); });
+  }
+
+  window.wcSignup = async function(){
+    var name = document.getElementById('wc-signup-name').value.trim();
+    var user = document.getElementById('wc-signup-user').value.trim().toLowerCase();
+    var pass = document.getElementById('wc-signup-pass').value;
+    var errBox = document.getElementById('wc-signup-error'); errBox.innerHTML = '';
+    if(!name || !user || !pass){ errBox.innerHTML = '<div class="wc-error">Please fill in all fields.</div>'; return; }
+    if(pass.length < 4){ errBox.innerHTML = '<div class="wc-error">Password must be at least 4 characters.</div>'; return; }
+    if(S.users.find(function(x){return x.username===user;})){ errBox.innerHTML = '<div class="wc-error">That username is already taken.</div>'; return; }
+    var role = S.users.length === 0 ? 'admin' : 'pending';
+    var newUser = { username:user, password:pass, name:name, role:role };
+    S.users.push(newUser);
+    await save.users();
+    if(role === 'admin'){ S.currentUser = newUser; localSet('wc-session', {username:user}); showApp(); }
+    else {
+      document.getElementById('wc-pending-username').textContent = user;
+      hideAllScreens(); document.getElementById('wc-pending-screen').classList.remove('wc-hidden');
+    }
+  };
+
+  window.wcLogin = async function(){
+    var user = document.getElementById('wc-login-user').value.trim().toLowerCase();
+    var pass = document.getElementById('wc-login-pass').value;
+    var errBox = document.getElementById('wc-login-error'); errBox.innerHTML = '';
+    var u = S.users.find(function(x){return x.username===user && x.password===pass;});
+    if(!u){ errBox.innerHTML = '<div class="wc-error">Wrong username or password.</div>'; return; }
+    if(u.role === 'pending'){
+      document.getElementById('wc-pending-username').textContent = user;
+      hideAllScreens(); document.getElementById('wc-pending-screen').classList.remove('wc-hidden');
+      return;
+    }
+    S.currentUser = u;
+    localSet('wc-session', {username:user});
+    showApp();
+  };
+
+  window.wcLogout = function(){
+    S.currentUser = null;
+    localSet('wc-session', {username:null});
+    document.getElementById('wc-login-user').value=''; document.getElementById('wc-login-pass').value='';
+    wcShowLogin();
+  };
+
+  function showApp(){
+    hideAllScreens();
+    document.getElementById('wc-app').classList.remove('wc-hidden');
+    document.getElementById('wc-current-name').textContent = S.currentUser.name;
+    document.getElementById('wc-current-role').textContent = S.currentUser.role;
+    document.getElementById('wc-admin-nav-btn').classList.toggle('wc-hidden', S.currentUser.role !== 'admin');
+    wcSwitchTab('deliver');
+  }
+
+  // ---------------- tabs (instant — data already streams in live via listeners) ----------------
+  var renderers = null;
+  window.wcSwitchTab = function(tab){
+    S.activeTab = tab;
+    document.querySelectorAll('.wc-nav-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab')===tab); });
+    renderActiveTab();
+  };
+  function renderActiveTab(){
+    if(!renderers) renderers = { deliver: renderDeliver, apartments: renderApartments, billing: renderBilling, expenses: renderExpenses, admin: renderAdmin };
+    (renderers[S.activeTab] || renderDeliver)();
+  }
+  function content(){ return document.getElementById('wc-content'); }
+
+  // ---------------- modal ----------------
+  window.wcCloseModal = function(){
+    document.getElementById('wc-modal-bg').classList.remove('show');
+    setTimeout(function(){ document.getElementById('wc-modal-inner').innerHTML=''; }, 200);
+  };
+  function openModal(html){
+    document.getElementById('wc-modal-inner').innerHTML = html;
+    document.getElementById('wc-modal-bg').classList.add('show');
+  }
+
+  // ================= DELIVER TAB =================
+  function activeApartments(){ return S.apartments.slice().sort(function(a,b){ return a.name.localeCompare(b.name); }); }
+  function cansForAptMonth(aptId, mk, includeCleared){
+    return S.entries.filter(function(e){ return e.apartmentId===aptId && monthKeyOf(e.date)===mk && (includeCleared || !e.cleared); })
+      .reduce(function(sum,e){ return sum+e.cans; }, 0);
+  }
+  function todaysTotalCans(){
+    var t = todayStr();
+    return S.entries.filter(function(e){ return e.date===t; }).reduce(function(s,e){ return s+e.cans; }, 0);
+  }
+
+  function renderDeliver(){
+    var apts = activeApartments();
+    var mk = currentMonthKey();
+    var html = '';
+
+    var todayTotal = todaysTotalCans();
+    var pct = Math.max(4, Math.min(100, Math.round((todayTotal/200)*100)));
+    html += '<div class="wc-hero">'+
+      '<div class="wc-tank"><div class="fill" style="height:'+pct+'%;">'+WAVE_SVG+'</div></div>'+
+      '<div class="wc-hero-txt"><div class="num wc-mono">'+todayTotal+'</div><div class="lbl">cans delivered today across all places</div></div>'+
+      '</div>';
+
+    if(apts.length===0){
+      html += '<div class="wc-card"><div class="wc-empty">No places added yet.<br>Go to the <b>Places</b> tab to add your first apartment.</div></div>';
+      content().innerHTML = html;
+      return;
+    }
+
+    html += '<div class="wc-section-title">Select place</div>';
+    html += '<div class="wc-apt-pick">';
+    apts.forEach(function(a){
+      var sel = S.selectedAptId===a.id;
+      var monthCans = cansForAptMonth(a.id, mk, false);
+      html += '<button type="button" class="wc-apt-tile wc-tap'+(sel?' selected':'')+'" onclick="wcSelectApt(\''+a.id+'\')">'+
+                '<div class="name">'+escapeHtml(a.name)+'</div><div class="meta">'+monthCans+' cans this month</div></button>';
+    });
+    html += '</div>';
+
+    if(S.selectedAptId){
+      var apt = S.apartments.find(function(x){return x.id===S.selectedAptId;});
+      if(apt){
+        html += '<div class="wc-card"><h3>Cans delivered to '+escapeHtml(apt.name)+' today</h3>';
+        html += '<div class="wc-qty-row">';
+        [5,10,15,20].forEach(function(q){ html += '<div class="wc-qty-chip wc-tap'+(S.selectedQty===q?' selected':'')+'" onclick="wcPickQty('+q+')">'+q+'</div>'; });
+        html += '</div>';
+        html += '<div class="wc-field"><label>Or type exact number</label>'+
+                  '<input type="number" min="1" id="wc-manual-qty" placeholder="e.g. 12" value="'+(S.selectedQty&&![5,10,15,20].includes(S.selectedQty)?S.selectedQty:'')+'" oninput="wcManualQty(this.value)"/></div>';
+        html += '<button class="wc-btn wc-tap" onclick="wcSubmitDelivery()">Save Delivery</button></div>';
+
+        var monthTotal = cansForAptMonth(apt.id, mk, false);
+        html += '<div class="wc-summary-grid" style="grid-template-columns:1fr;"><div class="wc-summary-box"><div class="v">'+monthTotal+' cans</div><div class="l">Total this month — '+escapeHtml(apt.name)+'</div></div></div>';
+
+        var recent = S.entries.filter(function(e){return e.apartmentId===apt.id;}).sort(function(a,b){ return b.ts - a.ts; }).slice(0,8);
+        html += '<div class="wc-card"><h3>Recent entries</h3>';
+        if(recent.length===0){ html += '<div class="wc-empty">No deliveries logged yet.</div>'; }
+        else{ recent.forEach(function(e){ html += '<div class="wc-feed-item"><span>'+e.date+' — <span class="cans-badge">'+e.cans+' cans</span></span><span class="who">'+escapeHtml(e.worker)+'</span></div>'; }); }
+        html += '</div>';
+      }
+    }
+    content().innerHTML = html;
+  }
+
+  window.wcSelectApt = function(id){ S.selectedAptId = id; S.selectedQty = null; renderDeliver(); };
+  window.wcPickQty = function(q){ S.selectedQty = q; renderDeliver(); };
+  window.wcManualQty = function(v){ var n = parseInt(v,10); S.selectedQty = (n && n>0) ? n : null; };
+
+  window.wcSubmitDelivery = async function(){
+    if(!S.selectedAptId || !S.selectedQty){ showToast('Pick a place and cans count first', 'error'); return; }
+    var apt = S.apartments.find(function(a){return a.id===S.selectedAptId;});
+    S.entries.push({ id: uid(), apartmentId: S.selectedAptId, cans: S.selectedQty, date: todayStr(), worker: S.currentUser.name, ts: Date.now(), cleared: false });
+    var qty = S.selectedQty;
+    S.selectedQty = null;
+    renderDeliver();
+    showToast(qty+' cans logged for '+apt.name, 'success');
+    await save.entries();
+  };
+
+  // ================= APARTMENTS TAB =================
+  function renderApartments(){
+    var apts = activeApartments();
+    var mk = currentMonthKey();
+    var html = '<div class="wc-card"><h3>Places (apartments)</h3>';
+    if(apts.length===0){ html += '<div class="wc-empty">No places yet. Add your first one below.</div>'; }
+    apts.forEach(function(a){
+      var cans = cansForAptMonth(a.id, mk, false);
+      html += '<div class="wc-list-row"><div><div class="name">'+escapeHtml(a.name)+'</div><div class="sub">₹'+a.rate+' / can</div></div>'+
+        '<div class="right"><div class="wc-amt">'+cans+'</div>'+
+        (S.currentUser.role==='admin' ? '<button class="wc-icon-btn" onclick="wcEditApt(\''+a.id+'\')">Edit</button>' : '') + '</div></div>';
+    });
+    html += '</div>';
+    if(S.currentUser.role==='admin'){ html += '<button class="wc-btn wc-tap" onclick="wcAddAptModal()">+ Add New Place</button>'; }
+    content().innerHTML = html;
+  }
+
+  window.wcAddAptModal = function(){
+    openModal('<h3>Add a place</h3>'+
+      '<div class="wc-field"><label>Name</label><input id="wc-apt-name" placeholder="e.g. Green Valley Apts"/></div>'+
+      '<div class="wc-field"><label>Rate per can (₹)</label><input id="wc-apt-rate" type="number" min="1" placeholder="e.g. 8"/></div>'+
+      '<button class="wc-btn wc-tap" onclick="wcSaveNewApt()">Save Place</button>');
+  };
+  window.wcSaveNewApt = async function(){
+    var name = document.getElementById('wc-apt-name').value.trim();
+    var rate = parseFloat(document.getElementById('wc-apt-rate').value);
+    if(!name || !rate || rate<=0){ showToast('Enter a valid name and rate', 'error'); return; }
+    S.apartments.push({ id: uid(), name: name, rate: rate });
+    wcCloseModal(); renderApartments(); showToast('Place added', 'success');
+    await save.apartments();
+  };
+  window.wcEditApt = function(id){
+    var a = S.apartments.find(function(x){return x.id===id;});
+    if(!a) return;
+    openModal('<h3>Edit '+escapeHtml(a.name)+'</h3>'+
+      '<div class="wc-field"><label>Name</label><input id="wc-apt-edit-name" value="'+escapeHtml(a.name)+'"/></div>'+
+      '<div class="wc-field"><label>Rate per can (₹)</label><input id="wc-apt-edit-rate" type="number" min="1" value="'+a.rate+'"/></div>'+
+      '<button class="wc-btn wc-tap" onclick="wcSaveEditApt(\''+id+'\')">Save Changes</button>'+
+      '<button class="wc-btn danger wc-tap" style="margin-top:10px;" onclick="wcRemoveApt(\''+id+'\')">Remove Place</button>');
+  };
+  window.wcSaveEditApt = async function(id){
+    var a = S.apartments.find(function(x){return x.id===id;});
+    var name = document.getElementById('wc-apt-edit-name').value.trim();
+    var rate = parseFloat(document.getElementById('wc-apt-edit-rate').value);
+    if(!name || !rate || rate<=0){ showToast('Enter a valid name and rate', 'error'); return; }
+    a.name = name; a.rate = rate;
+    wcCloseModal(); renderApartments(); showToast('Place updated', 'success');
+    await save.apartments();
+  };
+  window.wcRemoveApt = async function(id){
+    S.apartments = S.apartments.filter(function(a){return a.id!==id;});
+    wcCloseModal(); renderApartments(); showToast('Place removed', 'success');
+    await save.apartments();
+  };
+
+  // ================= BILLING TAB =================
+  function renderBilling(){
+    var mk = wcCurrentMonth;
+    var apts = activeApartments();
+    var html = monthNavHtml(mk);
+
+    var totalCans=0, totalAmount=0;
+    var rows = apts.map(function(a){
+      var cans = cansForAptMonth(a.id, mk, false);
+      var amount = cans * a.rate;
+      totalCans += cans; totalAmount += amount;
+      return {apt:a, cans:cans, amount:amount};
+    }).filter(function(r){ return r.cans>0; });
+
+    html += '<div class="wc-summary-grid"><div class="wc-summary-box"><div class="v">'+totalCans+'</div><div class="l">Cans this month</div></div>'+
+      '<div class="wc-summary-box"><div class="v">₹'+totalAmount.toFixed(0)+'</div><div class="l">Revenue, all places</div></div></div>';
+
+    html += '<div class="wc-card"><h3>Pending bills</h3>';
+    if(rows.length===0){ html += '<div class="wc-empty">No deliveries recorded for this month yet.</div>'; }
+    rows.forEach(function(r){
+      html += '<div class="wc-list-row"><div><div class="name">'+escapeHtml(r.apt.name)+'</div><div class="sub">'+r.cans+' cans × ₹'+r.apt.rate+'</div></div>'+
+        '<div class="right"><div class="wc-amt">₹'+r.amount.toFixed(0)+'</div><button class="wc-icon-btn" onclick="wcClearBill(\''+r.apt.id+'\',\''+mk+'\')">Mark Cleared</button></div></div>';
+    });
+    html += '</div>';
+
+    var pastRecords = S.history.filter(function(h){return h.month===mk;}).sort(function(a,b){ return b.clearedAt-a.clearedAt; });
+    html += '<div class="wc-section-title">Cleared this month</div><div class="wc-card">';
+    if(pastRecords.length===0){ html += '<div class="wc-empty">Nothing cleared yet for this month.</div>'; }
+    pastRecords.forEach(function(h){
+      html += '<div class="wc-list-row"><div><div class="name">'+escapeHtml(h.apartmentName)+'</div><div class="sub">'+h.cans+' cans · cleared by '+escapeHtml(h.clearedBy)+'</div></div>'+
+        '<div class="right"><div class="wc-amt">₹'+h.amount.toFixed(0)+'</div><span class="wc-tag cleared">Cleared</span></div></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="wc-section-title">Previous months</div>';
+    var monthsSet = {}; S.history.forEach(function(h){ monthsSet[h.month]=true; });
+    var months = Object.keys(monthsSet).filter(function(m){return m!==mk;}).sort().reverse();
+    html += '<div class="wc-card">';
+    if(months.length===0){ html += '<div class="wc-empty">No past finalized months yet.</div>'; }
+    months.forEach(function(m){
+      var recs = S.history.filter(function(h){return h.month===m;});
+      var mtotal = recs.reduce(function(s,h){return s+h.amount;},0);
+      html += '<div class="wc-list-row"><div><div class="name">'+monthLabel(m)+'</div><div class="sub">'+recs.length+' places billed</div></div>'+
+        '<div class="right"><div class="wc-amt">₹'+mtotal.toFixed(0)+'</div><button class="wc-icon-btn" onclick="wcViewMonth(\''+m+'\')">View</button></div></div>';
+    });
+    html += '</div>';
+    content().innerHTML = html;
+  }
+
+  window.wcShiftMonth = function(dir){
+    wcCurrentMonth = shiftMonthKey(wcCurrentMonth, dir);
+    if(S.activeTab==='expenses'){ renderExpenses(); } else { renderBilling(); }
+  };
+  window.wcJumpToday = function(){
+    wcCurrentMonth = currentMonthKey();
+    if(S.activeTab==='expenses'){ renderExpenses(); } else { renderBilling(); }
+  };
+
+  window.wcClearBill = function(aptId, mk){
+    var apt = S.apartments.find(function(a){return a.id===aptId;});
+    var cans = cansForAptMonth(aptId, mk, false);
+    var amount = cans*apt.rate;
+    openModal('<h3>Confirm payment received</h3>'+
+      '<p style="color:var(--ink-soft);font-size:14px;line-height:1.6;">Mark <b style="color:var(--ink);">'+escapeHtml(apt.name)+'</b> as paid for '+monthLabel(mk)+'?<br>'+cans+' cans × ₹'+apt.rate+' = <b style="color:var(--ink);">₹'+amount.toFixed(0)+'</b></p>'+
+      '<button class="wc-btn wc-tap" onclick="wcConfirmClear(\''+aptId+'\',\''+mk+'\')">Yes, Cash Received — Clear</button>'+
+      '<button class="wc-btn ghost wc-tap" style="margin-top:10px;" onclick="wcCloseModal()">Cancel</button>');
+  };
+  window.wcConfirmClear = async function(aptId, mk){
+    var apt = S.apartments.find(function(a){return a.id===aptId;});
+    var matching = S.entries.filter(function(e){ return e.apartmentId===aptId && monthKeyOf(e.date)===mk && !e.cleared; });
+    var cans = matching.reduce(function(s,e){return s+e.cans;},0);
+    var amount = cans*apt.rate;
+    S.history.push({ id: uid(), apartmentId: aptId, apartmentName: apt.name, month: mk, cans: cans, rate: apt.rate, amount: amount, clearedBy: S.currentUser.name, clearedAt: Date.now() });
+    var matchIds = matching.map(function(e){return e.id;});
+    S.entries = S.entries.filter(function(e){ return matchIds.indexOf(e.id)===-1; });
+    wcCloseModal(); renderBilling(); showToast('Payment cleared for '+apt.name, 'success');
+    await save.history(); await save.entries();
+  };
+
+  window.wcViewMonth = function(m){
+    var recs = S.history.filter(function(h){return h.month===m;}).sort(function(a,b){return b.amount-a.amount;});
+    var total = recs.reduce(function(s,h){return s+h.amount;},0);
+    var html = '<h3>'+monthLabel(m)+' — Final Summary</h3>';
+    recs.forEach(function(h){
+      html += '<div class="wc-list-row"><div><div class="name">'+escapeHtml(h.apartmentName)+'</div><div class="sub">'+h.cans+' cans × ₹'+h.rate+' · '+escapeHtml(h.clearedBy)+'</div></div>'+
+        '<div class="right wc-amt">₹'+h.amount.toFixed(0)+'</div></div>';
+    });
+    html += '<div class="wc-hero" style="margin-top:16px;"><div class="wc-hero-txt"><div class="num wc-mono">₹'+total.toFixed(0)+'</div><div class="lbl">Total revenue, all places</div></div></div>';
+    openModal(html);
+  };
+
+  // ================= EXPENSES TAB =================
+  function renderExpenses(){
+    var mk = wcCurrentMonth;
+    var monthExp = S.expenses.filter(function(e){return monthKeyOf(e.date)===mk;}).sort(function(a,b){return b.ts-a.ts;});
+    var total = monthExp.reduce(function(s,e){return s+e.amount;},0);
+    var apts = activeApartments();
+    var revenue = apts.reduce(function(s,a){ return s + cansForAptMonth(a.id, mk, false)*a.rate; }, 0)
+      + S.history.filter(function(h){return h.month===mk;}).reduce(function(s,h){return s+h.amount;},0);
+
+    var html = monthNavHtml(mk);
+    html += '<div class="wc-summary-grid"><div class="wc-summary-box"><div class="v">₹'+total.toFixed(0)+'</div><div class="l">Expenses</div></div>'+
+      '<div class="wc-summary-box"><div class="v">₹'+(revenue-total).toFixed(0)+'</div><div class="l">Net profit</div></div></div>';
+
+    html += '<div class="wc-card"><h3>Expenses</h3>';
+    if(monthExp.length===0){ html += '<div class="wc-empty">No expenses logged for this month.</div>'; }
+    monthExp.forEach(function(e){
+      html += '<div class="wc-list-row"><div><div class="name">'+escapeHtml(e.desc)+'</div><div class="sub">'+e.date+' · paid by '+escapeHtml(e.paidBy)+'</div></div>'+
+        '<div class="right"><div class="wc-amt">₹'+e.amount.toFixed(0)+'</div><button class="wc-icon-btn" onclick="wcDeleteExpense(\''+e.id+'\')">Delete</button></div></div>';
+    });
+    html += '</div><button class="wc-btn wc-tap" onclick="wcAddExpenseModal()">+ Add Expense</button>';
+    content().innerHTML = html;
+  }
+
+  window.wcAddExpenseModal = function(){
+    var opts = S.users.filter(function(u){return u.role!=='pending';}).map(function(u){ return '<option value="'+escapeHtml(u.name)+'">'+escapeHtml(u.name)+'</option>'; }).join('');
+    openModal('<h3>Add expense</h3>'+
+      '<div class="wc-field"><label>Description</label><input id="wc-exp-desc" placeholder="e.g. Petrol, can repair, staff food"/></div>'+
+      '<div class="wc-field"><label>Amount (₹)</label><input id="wc-exp-amt" type="number" min="1" placeholder="e.g. 500"/></div>'+
+      '<div class="wc-field"><label>Paid by</label><select id="wc-exp-paidby">'+opts+'</select></div>'+
+      '<div class="wc-field"><label>Date</label><input id="wc-exp-date" type="date" value="'+todayStr()+'"/></div>'+
+      '<button class="wc-btn wc-tap" onclick="wcSaveExpense()">Save Expense</button>');
+  };
+  window.wcSaveExpense = async function(){
+    var desc = document.getElementById('wc-exp-desc').value.trim();
+    var amt = parseFloat(document.getElementById('wc-exp-amt').value);
+    var paidBy = document.getElementById('wc-exp-paidby').value;
+    var date = document.getElementById('wc-exp-date').value || todayStr();
+    if(!desc || !amt || amt<=0){ showToast('Enter a description and amount', 'error'); return; }
+    S.expenses.push({ id: uid(), desc: desc, amount: amt, paidBy: paidBy, date: date, ts: Date.now() });
+    wcCloseModal(); renderExpenses(); showToast('Expense added', 'success');
+    await save.expenses();
+  };
+  window.wcDeleteExpense = async function(id){
+    S.expenses = S.expenses.filter(function(e){return e.id!==id;});
+    renderExpenses();
+    await save.expenses();
+  };
+
+  // ================= ADMIN TAB =================
+  function renderAdmin(){
+    if(S.currentUser.role!=='admin'){ content().innerHTML='<div class="wc-card"><div class="wc-empty">Admin access only.</div></div>'; return; }
+    var pending = S.users.filter(function(u){return u.role==='pending';});
+    var approved = S.users.filter(function(u){return u.role!=='pending';});
+    var html = '<div class="wc-card"><h3>Business name</h3>'+
+      '<div class="wc-list-row"><div><div class="name">'+escapeHtml(S.brand.name)+'</div><div class="sub">Shown on login &amp; app header</div></div>'+
+      '<div class="right"><button class="wc-icon-btn" onclick="wcEditBrandModal()">Edit</button></div></div></div>';
+    html += '<div class="wc-card"><h3>Pending approval</h3>';
+    if(pending.length===0){ html += '<div class="wc-empty">No pending requests.</div>'; }
+    pending.forEach(function(u){
+      html += '<div class="wc-list-row"><div><div class="name">'+escapeHtml(u.name)+'</div><div class="sub">@'+escapeHtml(u.username)+'</div></div>'+
+        '<div class="right"><button class="wc-btn small wc-tap" onclick="wcApproveUser(\''+u.username+'\')">Approve</button></div></div>';
+    });
+    html += '</div><div class="wc-card"><h3>Team members</h3>';
+    approved.forEach(function(u){
+      html += '<div class="wc-list-row"><div><div class="name">'+escapeHtml(u.name)+'</div><div class="sub">@'+escapeHtml(u.username)+' · '+u.role+'</div></div>'+
+        (u.username!==S.currentUser.username ? '<div class="right"><button class="wc-icon-btn" style="color:var(--red);" onclick="wcRemoveUser(\''+u.username+'\')">Remove</button></div>' : '') + '</div>';
+    });
+    html += '</div>';
+    content().innerHTML = html;
+  }
+  window.wcEditBrandModal = function(){
+    openModal('<h3>Rename your business</h3>'+
+      '<div class="wc-field"><label>Business / app name</label><input id="wc-brand-input" value="'+escapeHtml(S.brand.name)+'" placeholder="e.g. Sri Sai Aqua Suppliers"/></div>'+
+      '<button class="wc-btn wc-tap" onclick="wcSaveBrand()">Save Name</button>');
+  };
+  window.wcSaveBrand = async function(){
+    var name = document.getElementById('wc-brand-input').value.trim();
+    if(!name){ showToast('Enter a name', 'error'); return; }
+    S.brand = { name: name };
+    applyBrand();
+    wcCloseModal(); renderAdmin(); showToast('Business name updated', 'success');
+    await save.brand();
+  };
+  window.wcApproveUser = async function(username){
+    var u = S.users.find(function(x){return x.username===username;});
+    if(u){ u.role='worker'; renderAdmin(); showToast(u.name+' approved', 'success'); await save.users(); }
+  };
+  window.wcRemoveUser = async function(username){
+    S.users = S.users.filter(function(x){return x.username!==username;});
+    renderAdmin(); await save.users();
+  };
+
+  boot();
+})();
+</script>
+
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+</script>
+
+</body>
+</html>
