@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="AquaTrack"/>
+<meta name="apple-mobile-web-app-title" content="PURESIIP"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
 <link rel="icon" href="icon-192.png"/>
@@ -258,7 +258,7 @@
   storageBucket: "puresiip.firebasestorage.app",
   messagingSenderId: "2818416930",
   appId: "1:2818416930:web:4132a8024b330b8738857b"
-};
+  };
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
@@ -278,7 +278,7 @@
   <!-- AUTH: LOGIN -->
   <div id="wc-login-screen" class="wc-auth-wrap wc-hidden">
     <div class="wc-theme-slot"></div>
-    <div class="wc-auth-logo"><span class="wc-mark lg"></span><h1 class="wc-brand-name">Puresiip</h1></div>
+    <div class="wc-auth-logo"><span class="wc-mark lg"></span><h1 class="wc-brand-name">PURESIIP</h1></div>
     <p class="wc-auth-sub">Delivery &amp; billing, synced across your team</p>
     <div id="wc-login-error"></div>
     <div class="wc-field"><label>Username</label><input id="wc-login-user" autocomplete="username" placeholder="e.g. ravi01"/></div>
@@ -290,7 +290,7 @@
   <!-- AUTH: SIGNUP -->
   <div id="wc-signup-screen" class="wc-auth-wrap wc-hidden">
     <div class="wc-theme-slot"></div>
-    <div class="wc-auth-logo"><span class="wc-mark lg"></span><h1 class="wc-brand-name">Puresiip</h1></div>
+    <div class="wc-auth-logo"><span class="wc-mark lg"></span><h1 class="wc-brand-name">PURESIIP</h1></div>
     <p class="wc-auth-sub">Create your account</p>
     <div id="wc-signup-error"></div>
     <div class="wc-field"><label>Your Name</label><input id="wc-signup-name" placeholder="e.g. Ravi Kumar"/></div>
@@ -303,7 +303,7 @@
   <!-- PENDING -->
   <div id="wc-pending-screen" class="wc-auth-wrap wc-hidden">
     <div class="wc-theme-slot"></div>
-    <div class="wc-auth-logo"><span class="wc-mark lg"></span><h1 class="wc-brand-name">Puresiip</h1></div>
+    <div class="wc-auth-logo"><span class="wc-mark lg"></span><h1 class="wc-brand-name">PURESIIP</h1></div>
     <div class="wc-info">Your account is created but waiting for admin approval. Ask your admin to approve <b id="wc-pending-username"></b> from the Admin tab, then log in again.</div>
     <button class="wc-btn ghost wc-tap" style="margin-top:16px;" onclick="wcLogout()">Back to Login</button>
   </div>
@@ -358,7 +358,7 @@
 (function(){
   var S = {
     users: [], apartments: [], entries: [], expenses: [], history: [],
-    brand: { name: 'AquaTrack' },
+    brand: { name: 'PURESIIP' },
     currentUser: null, activeTab: 'deliver',
     selectedAptId: null, selectedQty: null
   };
@@ -432,7 +432,7 @@
   // ---------------- Firestore data layer (shared across every phone) ----------------
   var DOC_DEFAULTS = {
     users: {list:[]}, apartments: {list:[]}, entries: {list:[]}, expenses: {list:[]}, history: {list:[]},
-    brand: {name:'AquaTrack'}
+    brand: {name:'PURESIIP'}
   };
   async function saveDoc(name, dataObj){
     if(!db) return;
@@ -609,6 +609,10 @@
     return S.entries.filter(function(e){ return e.apartmentId===aptId && monthKeyOf(e.date)===mk && (includeCleared || !e.cleared); })
       .reduce(function(sum,e){ return sum+e.cans; }, 0);
   }
+  // "open" = logged but not yet End-of-Month'd — this is what billing counts as still accumulating
+  function openCansForApt(aptId){
+    return S.entries.filter(function(e){ return e.apartmentId===aptId; }).reduce(function(sum,e){ return sum+e.cans; }, 0);
+  }
   function todaysTotalCans(){
     var t = todayStr();
     return S.entries.filter(function(e){ return e.date===t; }).reduce(function(s,e){ return s+e.cans; }, 0);
@@ -653,13 +657,19 @@
                   '<input type="number" min="1" id="wc-manual-qty" placeholder="e.g. 12" value="'+(S.selectedQty&&![5,10,15,20].includes(S.selectedQty)?S.selectedQty:'')+'" oninput="wcManualQty(this.value)"/></div>';
         html += '<button class="wc-btn wc-tap" onclick="wcSubmitDelivery()">Save Delivery</button></div>';
 
-        var monthTotal = cansForAptMonth(apt.id, mk, false);
-        html += '<div class="wc-summary-grid" style="grid-template-columns:1fr;"><div class="wc-summary-box"><div class="v">'+monthTotal+' cans</div><div class="l">Total this month — '+escapeHtml(apt.name)+'</div></div></div>';
+        var openCans = openCansForApt(apt.id);
+        html += '<div class="wc-summary-grid" style="grid-template-columns:1fr;"><div class="wc-summary-box"><div class="v">'+openCans+' cans</div><div class="l">Awaiting billing — '+escapeHtml(apt.name)+'</div></div></div>';
 
-        var recent = S.entries.filter(function(e){return e.apartmentId===apt.id;}).sort(function(a,b){ return b.ts - a.ts; }).slice(0,8);
-        html += '<div class="wc-card"><h3>Recent entries</h3>';
+        var recent = S.entries.filter(function(e){return e.apartmentId===apt.id;}).sort(function(a,b){ return b.ts - a.ts; }).slice(0,10);
+        html += '<div class="wc-card"><h3>Recent entries <span style="font-weight:400;color:var(--ink-faint);font-size:11.5px;">— tap to fix a mistake</span></h3>';
         if(recent.length===0){ html += '<div class="wc-empty">No deliveries logged yet.</div>'; }
-        else{ recent.forEach(function(e){ html += '<div class="wc-feed-item"><span>'+e.date+' — <span class="cans-badge">'+e.cans+' cans</span></span><span class="who">'+escapeHtml(e.worker)+'</span></div>'; }); }
+        else{
+          recent.forEach(function(e){
+            html += '<div class="wc-feed-item wc-tap" style="cursor:pointer;" onclick="wcEditEntryModal(\''+e.id+'\')">'+
+              '<span>'+e.date+' — <span class="cans-badge">'+e.cans+' cans</span></span>'+
+              '<span class="who">'+escapeHtml(e.worker)+' <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:2px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span></div>';
+          });
+        }
         html += '</div>';
       }
     }
@@ -678,6 +688,33 @@
     S.selectedQty = null;
     renderDeliver();
     showToast(qty+' cans logged for '+apt.name, 'success');
+    await save.entries();
+  };
+
+  // fix a mistake: edit or delete a single delivery entry
+  window.wcEditEntryModal = function(id){
+    var e = S.entries.find(function(x){return x.id===id;});
+    if(!e) return;
+    openModal('<h3>Edit delivery</h3>'+
+      '<div class="wc-field"><label>Date</label><input id="wc-entry-edit-date" type="date" value="'+e.date+'"/></div>'+
+      '<div class="wc-field"><label>Number of cans</label><input id="wc-entry-edit-cans" type="number" min="1" value="'+e.cans+'"/></div>'+
+      '<div style="font-size:12px;color:var(--ink-faint);margin-bottom:14px;">Logged by '+escapeHtml(e.worker)+'</div>'+
+      '<button class="wc-btn wc-tap" onclick="wcSaveEntryEdit(\''+id+'\')">Save Changes</button>'+
+      '<button class="wc-btn danger wc-tap" style="margin-top:10px;" onclick="wcDeleteEntry(\''+id+'\')">Delete This Entry</button>');
+  };
+  window.wcSaveEntryEdit = async function(id){
+    var e = S.entries.find(function(x){return x.id===id;});
+    if(!e) return;
+    var date = document.getElementById('wc-entry-edit-date').value;
+    var cans = parseInt(document.getElementById('wc-entry-edit-cans').value, 10);
+    if(!date || !cans || cans<=0){ showToast('Enter a valid date and cans count', 'error'); return; }
+    e.date = date; e.cans = cans;
+    wcCloseModal(); renderDeliver(); showToast('Delivery updated', 'success');
+    await save.entries();
+  };
+  window.wcDeleteEntry = async function(id){
+    S.entries = S.entries.filter(function(e){return e.id!==id;});
+    wcCloseModal(); renderDeliver(); showToast('Entry deleted', 'success');
     await save.entries();
   };
 
@@ -740,28 +777,39 @@
   function renderBilling(){
     var mk = wcCurrentMonth;
     var apts = activeApartments();
-    var html = monthNavHtml(mk);
+    var html = '';
 
-    var totalCans=0, totalAmount=0;
-    var rows = apts.map(function(a){
-      var cans = cansForAptMonth(a.id, mk, false);
+    var openRows = apts.map(function(a){
+      var cans = openCansForApt(a.id);
       var amount = cans * a.rate;
-      totalCans += cans; totalAmount += amount;
       return {apt:a, cans:cans, amount:amount};
     }).filter(function(r){ return r.cans>0; });
+    var openTotal = openRows.reduce(function(s,r){return s+r.amount;},0);
 
-    html += '<div class="wc-summary-grid"><div class="wc-summary-box"><div class="v">'+totalCans+'</div><div class="l">Cans this month</div></div>'+
-      '<div class="wc-summary-box"><div class="v">₹'+totalAmount.toFixed(0)+'</div><div class="l">Revenue, all places</div></div></div>';
+    var awaiting = S.history.filter(function(h){ return h.status==='awaiting'; }).sort(function(a,b){ return b.closedAt-a.closedAt; });
+    var awaitingTotal = awaiting.reduce(function(s,h){return s+h.amount;},0);
 
-    html += '<div class="wc-card"><h3>Pending bills</h3>';
-    if(rows.length===0){ html += '<div class="wc-empty">No deliveries recorded for this month yet.</div>'; }
-    rows.forEach(function(r){
+    html += '<div class="wc-summary-grid"><div class="wc-summary-box"><div class="v">₹'+openTotal.toFixed(0)+'</div><div class="l">Still accumulating</div></div>'+
+      '<div class="wc-summary-box"><div class="v">₹'+awaitingTotal.toFixed(0)+'</div><div class="l">Awaiting payment</div></div></div>';
+
+    html += '<div class="wc-card"><h3>Open — still accumulating</h3>';
+    if(openRows.length===0){ html += '<div class="wc-empty">No open deliveries right now.</div>'; }
+    openRows.forEach(function(r){
       html += '<div class="wc-list-row"><div><div class="name">'+escapeHtml(r.apt.name)+'</div><div class="sub">'+r.cans+' cans × ₹'+r.apt.rate+'</div></div>'+
-        '<div class="right"><div class="wc-amt">₹'+r.amount.toFixed(0)+'</div><button class="wc-icon-btn" onclick="wcClearBill(\''+r.apt.id+'\',\''+mk+'\')">Mark Cleared</button></div></div>';
+        '<div class="right"><div class="wc-amt">₹'+r.amount.toFixed(0)+'</div><button class="wc-icon-btn" onclick="wcEndMonth(\''+r.apt.id+'\')">End Billing (EOM)</button></div></div>';
     });
     html += '</div>';
 
-    var pastRecords = S.history.filter(function(h){return h.month===mk;}).sort(function(a,b){ return b.clearedAt-a.clearedAt; });
+    html += '<div class="wc-section-title">Awaiting payment</div><div class="wc-card">';
+    if(awaiting.length===0){ html += '<div class="wc-empty">Nothing waiting on payment. Press <b>End Billing (EOM)</b> above once you\'re ready to bill an apartment.</div>'; }
+    awaiting.forEach(function(h){
+      html += '<div class="wc-list-row"><div><div class="name">'+escapeHtml(h.apartmentName)+'</div><div class="sub">'+h.cans+' cans · closed '+h.closedOn+' by '+escapeHtml(h.closedBy)+'</div></div>'+
+        '<div class="right"><div class="wc-amt">₹'+h.amount.toFixed(0)+'</div><span class="wc-tag pending">Awaiting</span><br/><button class="wc-icon-btn" onclick="wcMarkPaidPrompt(\''+h.id+'\')">Mark Cleared</button></div></div>';
+    });
+    html += '</div>';
+
+    html += monthNavHtml(mk);
+    var pastRecords = S.history.filter(function(h){return h.status==='cleared' && h.month===mk;}).sort(function(a,b){ return b.clearedAt-a.clearedAt; });
     html += '<div class="wc-section-title">Cleared this month</div><div class="wc-card">';
     if(pastRecords.length===0){ html += '<div class="wc-empty">Nothing cleared yet for this month.</div>'; }
     pastRecords.forEach(function(h){
@@ -771,12 +819,12 @@
     html += '</div>';
 
     html += '<div class="wc-section-title">Previous months</div>';
-    var monthsSet = {}; S.history.forEach(function(h){ monthsSet[h.month]=true; });
+    var monthsSet = {}; S.history.filter(function(h){return h.status==='cleared';}).forEach(function(h){ monthsSet[h.month]=true; });
     var months = Object.keys(monthsSet).filter(function(m){return m!==mk;}).sort().reverse();
     html += '<div class="wc-card">';
     if(months.length===0){ html += '<div class="wc-empty">No past finalized months yet.</div>'; }
     months.forEach(function(m){
-      var recs = S.history.filter(function(h){return h.month===m;});
+      var recs = S.history.filter(function(h){return h.status==='cleared' && h.month===m;});
       var mtotal = recs.reduce(function(s,h){return s+h.amount;},0);
       html += '<div class="wc-list-row"><div><div class="name">'+monthLabel(m)+'</div><div class="sub">'+recs.length+' places billed</div></div>'+
         '<div class="right"><div class="wc-amt">₹'+mtotal.toFixed(0)+'</div><button class="wc-icon-btn" onclick="wcViewMonth(\''+m+'\')">View</button></div></div>';
@@ -794,29 +842,52 @@
     if(S.activeTab==='expenses'){ renderExpenses(); } else { renderBilling(); }
   };
 
-  window.wcClearBill = function(aptId, mk){
+  // Step 1: End Billing (EOM) — locks in the current open total for an apartment and starts a fresh count.
+  // The locked total sits in "Awaiting payment" until the cash actually arrives.
+  window.wcEndMonth = function(aptId){
     var apt = S.apartments.find(function(a){return a.id===aptId;});
-    var cans = cansForAptMonth(aptId, mk, false);
+    var cans = openCansForApt(aptId);
     var amount = cans*apt.rate;
-    openModal('<h3>Confirm payment received</h3>'+
-      '<p style="color:var(--ink-soft);font-size:14px;line-height:1.6;">Mark <b style="color:var(--ink);">'+escapeHtml(apt.name)+'</b> as paid for '+monthLabel(mk)+'?<br>'+cans+' cans × ₹'+apt.rate+' = <b style="color:var(--ink);">₹'+amount.toFixed(0)+'</b></p>'+
-      '<button class="wc-btn wc-tap" onclick="wcConfirmClear(\''+aptId+'\',\''+mk+'\')">Yes, Cash Received — Clear</button>'+
+    openModal('<h3>End billing period</h3>'+
+      '<p style="color:var(--ink-soft);font-size:14px;line-height:1.6;">Lock in <b style="color:var(--ink);">'+escapeHtml(apt.name)+'</b>\'s total so far?<br>'+cans+' cans × ₹'+apt.rate+' = <b style="color:var(--ink);">₹'+amount.toFixed(0)+'</b><br><br>This moves the bill to <b>Awaiting Payment</b> and any new deliveries logged after this start a fresh count — they won\'t be added to this bill even if payment comes late.</p>'+
+      '<button class="wc-btn wc-tap" onclick="wcConfirmEndMonth(\''+aptId+'\')">Yes, Lock This Bill</button>'+
       '<button class="wc-btn ghost wc-tap" style="margin-top:10px;" onclick="wcCloseModal()">Cancel</button>');
   };
-  window.wcConfirmClear = async function(aptId, mk){
+  window.wcConfirmEndMonth = async function(aptId){
     var apt = S.apartments.find(function(a){return a.id===aptId;});
-    var matching = S.entries.filter(function(e){ return e.apartmentId===aptId && monthKeyOf(e.date)===mk && !e.cleared; });
+    var matching = S.entries.filter(function(e){ return e.apartmentId===aptId; });
     var cans = matching.reduce(function(s,e){return s+e.cans;},0);
     var amount = cans*apt.rate;
-    S.history.push({ id: uid(), apartmentId: aptId, apartmentName: apt.name, month: mk, cans: cans, rate: apt.rate, amount: amount, clearedBy: S.currentUser.name, clearedAt: Date.now() });
+    S.history.push({
+      id: uid(), apartmentId: aptId, apartmentName: apt.name, cans: cans, rate: apt.rate, amount: amount,
+      status: 'awaiting', closedOn: todayStr(), closedBy: S.currentUser.name, closedAt: Date.now(), month: currentMonthKey(),
+      clearedBy: null, clearedAt: null
+    });
     var matchIds = matching.map(function(e){return e.id;});
     S.entries = S.entries.filter(function(e){ return matchIds.indexOf(e.id)===-1; });
-    wcCloseModal(); renderBilling(); showToast('Payment cleared for '+apt.name, 'success');
+    wcCloseModal(); renderBilling(); showToast(apt.name+' billed — awaiting payment', 'success');
     await save.history(); await save.entries();
   };
 
+  // Step 2: once cash actually arrives, mark the locked bill as cleared.
+  window.wcMarkPaidPrompt = function(historyId){
+    var h = S.history.find(function(x){return x.id===historyId;});
+    if(!h) return;
+    openModal('<h3>Confirm payment received</h3>'+
+      '<p style="color:var(--ink-soft);font-size:14px;line-height:1.6;">Mark <b style="color:var(--ink);">'+escapeHtml(h.apartmentName)+'</b>\'s bill of <b style="color:var(--ink);">₹'+h.amount.toFixed(0)+'</b> (closed '+h.closedOn+') as paid?</p>'+
+      '<button class="wc-btn wc-tap" onclick="wcConfirmMarkPaid(\''+historyId+'\')">Yes, Cash Received — Clear</button>'+
+      '<button class="wc-btn ghost wc-tap" style="margin-top:10px;" onclick="wcCloseModal()">Cancel</button>');
+  };
+  window.wcConfirmMarkPaid = async function(historyId){
+    var h = S.history.find(function(x){return x.id===historyId;});
+    if(!h) return;
+    h.status = 'cleared'; h.clearedBy = S.currentUser.name; h.clearedAt = Date.now();
+    wcCloseModal(); renderBilling(); showToast('Payment cleared for '+h.apartmentName, 'success');
+    await save.history();
+  };
+
   window.wcViewMonth = function(m){
-    var recs = S.history.filter(function(h){return h.month===m;}).sort(function(a,b){return b.amount-a.amount;});
+    var recs = S.history.filter(function(h){return h.status==='cleared' && h.month===m;}).sort(function(a,b){return b.amount-a.amount;});
     var total = recs.reduce(function(s,h){return s+h.amount;},0);
     var html = '<h3>'+monthLabel(m)+' — Final Summary</h3>';
     recs.forEach(function(h){
